@@ -30,9 +30,6 @@ class Game:
         #Calculate % of paragraph player has completed
         percentComplete = 100*(wordsCompleted/self.paragraphLength)
 
-        #Update player's progress property
-        self.playersProgress[playerID] = percentComplete
-
         #If the player has completed the paragraph, they win.
         if percentComplete == 100:
             self.isGameDone = True
