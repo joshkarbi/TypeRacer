@@ -1,5 +1,7 @@
-from essential_generators import DocumentGenerator
+import json, random
 from multiprocessing import Queue
+
+
 
 class Game:
     #queue, multiprocessing.queue obj #two - one I recieve from, one i send back
@@ -17,10 +19,12 @@ class Game:
         self.qSend = qSend
 
         #Generate random paragraph
-        self.gen = DocumentGenerator()
+        with open('paragraph_bank.json') as paragraph_bank_file:
+            paraBank = json.load(paragraph_bank_file)
+            randIndex = random.randint(0,len(paraBank)-1)
 
-        #Store paragraph to this object
-        self.paragraph = self.gen.paragraph()
+            #Store paragraph to this object
+            self.paragraph = paraBank[randIndex]
 
         #Store length of paragraph to this object
         self.paragraphLength = len(self.paragraph.split())
