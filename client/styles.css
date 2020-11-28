@@ -1,0 +1,30 @@
+body {
+    text-align:center;
+}
+
+#quote {
+    font-size: 0px;
+    margin: auto;
+    text-align: left;
+    width: 600px;
+    border-style: solid;
+    padding: 12px;
+}
+
+#complete {
+    color: green;
+    font-size: 24px
+}
+
+#upcoming {
+    color: black;
+    font-size: 24px
+}
+
+input {
+    font-size: 24px;
+    width: 600px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
