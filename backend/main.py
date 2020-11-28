@@ -6,6 +6,7 @@ Listen for messages of types:
 - New game request: {"type": "new_game"}
 - List games request: {"type": "get_games"}
 - Join game request: {"type": "join_game", "game_ID": 0}
+- Player ready status update: {"type": "player_status", "game_ID": "", player_ID": "", "status", "ready"}
 - Game updates: {"type": "update", "game_ID": "", "player_ID":"", "word_num": 0}
 
 Send back responses:
@@ -16,6 +17,9 @@ If we got a list games request:
     - Send back list {"type": "get_games": "games": ["ID-1", "ID-2", "ID-3", ... ]}
 If we got a join game request:
     - Join game successful: {"type": "join_game", "game_ID": "", "paragraph": "", "player_IDs": ["", "", ""] }
+When starting the game:
+    - All players are ready: {"type": "game_status", "game_ID": "","status": "countdown", "time_length_seconds": 3}
+    - Game started: {"type": "game_status", "game_ID": "","status": "started"}
 If we got a game update:
     - Game updates: {"type":"update", "game_ID": "", "status": "in_progress", "updates": [
                                 {"player_ID": 0, "progress": 0.50},
@@ -54,6 +58,10 @@ async def ws_connection_handle(websocket, path):
                 
                 elif data.get("type") == "update":
                     await websocket.send( await game_server.handle_game_update(websocket, data) )
+
+                elif data.get("type") == "player_status":
+                    await game_server.handle_player_status(data)
+
             except json.JSONDecodeError as e:
                 print("Failed to parse JSON from client:", message)
                 await websocket.send(json.dumps({"error": "Invalid JSON."}))

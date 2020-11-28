@@ -3,6 +3,7 @@ Listen for messages of types:
 - New game request: {"type": "new_game"}
 - List games request: {"type": "get_games"}
 - Join game request: {"type": "join_game", "game_ID": 0}
+- Player ready status update: {"type": "player_status", "game_ID": "", player_ID": "", "status", "ready"}
 - Game updates: {"type": "update", "game_ID": "", "player_ID":"", "word_num": 0}
 
 Send back responses:
@@ -13,6 +14,9 @@ If we got a list games request:
     - Send back list {"type": "get_games": "games": ["ID-1", "ID-2", "ID-3", ... ]}
 If we got a join game request:
     - Join game successful: {"type": "join_game", "game_ID": "", "paragraph": "", "player_IDs": ["", "", ""] }
+When starting the game:
+    - All players are ready: {"type": "game_status", "game_ID": "","status": "countdown", "time_length_seconds": 3}
+    - Game started: {"type": "game_status", "game_ID": "","status": "started"}
 If we got a game update:
     - Game updates: {"type":"update", "game_ID": "", "status": "in_progress", "updates": [
                                 {"player_ID": 0, "progress": 0.50},
@@ -88,6 +92,18 @@ class GameServer:
 
     async def handle_get_games(self, ws, message: Dict[Any, Any]):
         response = {"type": "get_games", "games": list(self.rooms.keys())}
+        return json.dumps(response)
+
+
+    async def handle_player_status(self, message: Dict[Any, Any]):
+        response = {"error": "Not sure how to handle message.", "message": message}
+
+        # If all players ready, send countdown start to all websockets in this game ID
+
+        # Sleep for countdown (asyncio.sleep() ?)
+
+        # Send game has started
+
         return json.dumps(response)
 
     async def handle_game_update(self, ws, message: Dict[Any, Any]):
