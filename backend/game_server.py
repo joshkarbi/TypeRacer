@@ -34,6 +34,12 @@ from multiprocessing import Process, Queue, Event
 from threading import Thread
 from game import Game
 from multiprocessing import Process, Queue
+from enum import Enum
+
+class PlayerStatus(Enum):
+    JOINED=0
+    READY=1
+    QUIT=2
 
 class GameServer:
     def __init__(self):
@@ -45,6 +51,7 @@ class GameServer:
         self.send_queues = {} # Map game ID to a sending multiprocessing Queue
         self.recv_queues = {} # Map a game ID to a sending multiprocessing Queue
         self.game_objs = {} # Map a game ID to a Game instance
+        self.player_states = defaultdict(dict) # Map game ID -> player ID -> status
 
     async def __register(self, ws, game_ID: str):
         self.rooms[game_ID].append(ws)
@@ -53,10 +60,7 @@ class GameServer:
         # TODO: Generate a unique string ID
         new_game_ID = str(random.randint(1, 5)) # For testing
 
-        await self.__register(ws, new_game_ID)
-
         # Fork process to run the game
-
         this_game_sending = Queue()
         this_game_recving = Queue()
 
@@ -87,7 +91,12 @@ class GameServer:
             while seen_response==False:
                 seen_response = True
                 joined = self.recv_queues[message.get("game_ID")].get()
-                response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_IDs": list(range(joined["player_ID"] + 1)  )}       
+                players = list(range(joined["player_ID"] + 1) )
+                this_players_ID = players[-1]
+
+                response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_IDs": players  }     
+                self.player_states[game_ID][this_players_ID] = PlayerStatus.JOINED
+
                 return json.dumps(response)
 
     async def handle_get_games(self, ws, message: Dict[Any, Any]):
@@ -99,12 +108,23 @@ class GameServer:
         response = {"error": "Not sure how to handle message.", "message": message}
 
         # If all players ready, send countdown start to all websockets in this game ID
+        # {"type": "player_status", "game_ID": "", player_ID": "", "status", "ready"}
+        game_ID = message.get("game_ID")
+        if message.get("status") == "ready":
+            self.player_states[game_ID][message.get("player_ID")] = PlayerStatus.READY
+        
+        if all(self.player_states[game_ID][x]==PlayerStatus.READY for x in self.player_states[game_ID].keys()):
+            print("All players are ready in game ID", game_ID, "!")
+            for ws in self.rooms[game_ID]:
+                message = {"type": "game_status", "game_ID": game_ID,"status": "countdown", "time_length_seconds": 3}
+                await ws.send(json.dumps(message))
+            
+            await asyncio.sleep(3)
 
-        # Sleep for countdown (asyncio.sleep() ?)
-
-        # Send game has started
-
-        return json.dumps(response)
+            # Send game has started
+            for ws in self.rooms[game_ID]:
+                message = {"type": "game_status", "game_ID": game_ID, "status": "started"}
+                await ws.send(json.dumps(message))
 
     async def handle_game_update(self, ws, message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
