@@ -36,7 +36,7 @@ class Game:
             self.winPlayerID = playerID
         
         #Return the progress
-        return {"playerID": playerID, "progress": percentComplete}
+        return {"player_ID": playerID, "progress": percentComplete}
 
 
     def run(self):
@@ -48,7 +48,7 @@ class Game:
                 self.qSend.send(self.joinGame())
 
             elif message.type == "kill_game":
-                self.isGameDone == True
+                self.isGameDone = True
 
             else:
                 playerID = message.player_ID
@@ -59,7 +59,7 @@ class Game:
     
     def joinGame(self):
         self.playerIDCount += 1
-        return {"playerID": self.playerIDCount, "paragraph": self.paragraph}
+        return {"player_ID": self.playerIDCount, "paragraph": self.paragraph}
 
 
 
