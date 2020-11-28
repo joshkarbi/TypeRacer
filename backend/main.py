@@ -31,46 +31,36 @@ from collections import defaultdict
 from typing import Dict, List, Any
 from multiprocessing import Process, Queue, Event
 from threading import Thread
+from game_server import GameServer
 
-class GameServerState:
-    def __init__(self):
-        self.rooms = defaultdict(List[websockets.WebSocketCommonProtocol]) # map a game ID to a list of websockets
-        self.responses = Dict[str, Queue] # Map a game ID to a multiprocessing.Queue used to stream responses back from the game processor
 
-state = GameServerState()
-
-async def register(websocket, game_ID: str):
-    state.rooms[game_ID].append(websocket)
+game_server = GameServer()
 
 async def ws_connection_handle(websocket, path):    
     try:
         await websocket.send(json.dumps({"type": "connected"}) )
         async for message in websocket:
-            data = json.loads(message)
-            if data.get("type") == "new_game":
-                # new_game_ID = str(random.randint(123456789, 987654321))
-                new_game_ID = str(random.randint(1, 5)) # For testing
+            try:
+                data = json.loads(message)
+                if data.get("type") == "new_game":
+                    await websocket.send( await game_server.handle_new_game(websocket, data) )
 
-                await register(websocket, new_game_ID)
+                elif data.get("type") == "join_game":
+                    await websocket.send( await game_server.handle_join_game(websocket, data) )
 
-                # Fork process to run the game
+                elif data.get("type") == "get_games":
+                    await websocket.send( await game_server.handle_get_games(websocket, data) )
 
-                response = {"type": "new_game", "created": "success", "game_ID": str(new_game_ID), "paragraph": ""}
-                await websocket.send(json.dumps(response) )
-
-            elif data.get("type") == "join_game":
-                game_id = data.get("game_ID")
-                if game_id not in state.rooms.keys():
-                    response = {"error": "The provided game ID does not exist."}
-                else:
-                    # The game exists, add this websocket to that room.
-                    await register(websocket, data.get("game_ID"))
-                    response = {"type": "join_game", "game_ID": data.get("game_ID"), "paragraph": "", "player_IDs": []}
-                print("Response: ", response)
-                await websocket.send( json.dumps(response) )
-    
+                
+                elif data.get("type") == "update":
+                    await websocket.send( await game_server.handle_game_update(websocket, data) )
+            except json.JSONDecodeError as e:
+                print("Failed to parse JSON from client:", message)
+                await websocket.send(json.dumps({"error": "Invalid JSON."}))
+        
     except websockets.exceptions.ConnectionClosed as e:
         print("Connection closed. Code", e.code, " reason", e.reason)
+    
     except Exception as e:
         await websocket.close()
         print("Caught exception", e)

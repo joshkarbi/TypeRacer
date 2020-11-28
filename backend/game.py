@@ -46,19 +46,19 @@ class Game:
     def run(self):
         while not self.isGameDone:
 
-            message = self.qRecv.recv()
+            message = self.qRecv.get()
 
-            if message.type == "join_game":
-                self.qSend.send(self.joinGame())
+            if message.get("type") == "join_game":
+                self.qSend.put(self.joinGame())
 
-            elif message.type == "kill_game":
+            elif message.get("type") == "kill_game":
                 self.isGameDone = True
 
             else:
                 playerID = message.player_ID
                 wordCount = message.word_num
                 playerProgress = self.updatePlayerProgress(playerID, wordCount)
-                self.qSend.send(playerProgress)
+                self.qSend.put(playerProgress)
 
     
     def joinGame(self):
@@ -66,21 +66,19 @@ class Game:
         return {"player_ID": self.playerIDCount, "paragraph": self.paragraph}
 
 
+if __name__=="__main__":
 
+    #How to use
 
+    #create game object (switch send/recv queues in arguments)
+    game = Game(qSend, qRecv)
 
+    #join game returns paragraph and that everyone will be writing
+    game.joinGame()
 
-#How to use
+    #update a single player's progress by passing playerID and num of words completed (defined by split())
+    #returns playerID and their progress (%) in format: {"playerID": playerID, "progress": progress}
+    playersProgress = game.updatePlayerProgress(1, 10)
 
-#create game object (switch send/recv queues in arguments)
-game = Game(qSend, qRecv)
-
-#join game returns paragraph and that everyone will be writing
-game.joinGame()
-
-#update a single player's progress by passing playerID and num of words completed (defined by split())
-#returns playerID and their progress (%) in format: {"playerID": playerID, "progress": progress}
-playersProgress = game.updatePlayerProgress(1, 10)
-
-#isGameDone & winPlayerID to check if game has finished
-isGameFinished = game.isGameDone
+    #isGameDone & winPlayerID to check if game has finished
+    isGameFinished = game.isGameDone
