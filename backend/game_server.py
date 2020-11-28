@@ -44,6 +44,7 @@ class PlayerStatus(Enum):
 class GameServer:
     def __init__(self):
         self.jobs = []
+        self.game_ids = []
         self.rooms = defaultdict(list) # map a game ID to a list of websockets
         self.responses = {} # Map a game ID to a multiprocessing.Queue used to stream responses back from the game processor
 
@@ -63,6 +64,7 @@ class GameServer:
     async def handle_new_game(self, ws, message: Dict[Any, Any]):
         # TODO: Generate a unique string ID
         new_game_ID = str(random.randint(1, 5)) # For testing
+        self.game_ids.append(new_game_ID)
 
         # Fork process to run the game
         this_game_sending = Queue()
@@ -104,7 +106,7 @@ class GameServer:
                 return json.dumps(response)
 
     async def handle_get_games(self, ws, message: Dict[Any, Any]):
-        response = {"type": "get_games", "games": list(self.rooms.keys())}
+        response = {"type": "get_games", "games": self.game_ids}
         return json.dumps(response)
 
     async def send_to_all_in_game(self, game_ID: str, message: Any):
@@ -161,6 +163,7 @@ class GameServer:
                 if response.get("progress") == 100.0:
                     # The game is done!
                     await self.send_to_all_in_game(game_ID, {"type": "update", "game_ID": game_ID, "status": "finished", "winner_ID": response.get("player_ID")})
+                    self.game_ids.remove(game_ID)
                 else:
                     await self.send_to_all_in_game(game_ID,{"type":"update", "game_ID": game_ID, "status": "in_progress", "updates": self.game_player_percentages[game_ID] })
 

@@ -90,14 +90,14 @@ if __name__=="__main__":
         main_event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(main_event_loop)
         start_server = websockets.serve(ws_connection_handle, host=config["host"], port=config["port"], origins=config["origins"] if len(config["origins"])>0 else None)
-        
-        main_event_loop.run_until_complete(start_server)
+        server =  main_event_loop.run_until_complete(start_server)
 
         ws_handler_thread = Thread(target=ws_handle, args=[main_event_loop])
         ws_handler_thread.start()
         
         input("Enter anything to kill the server...\n")
 
-        print("Closing down server . . . ")
+        print("Closing down server . . .")
         game_server.shutdown()
+        server.close()
         main_event_loop.stop()
