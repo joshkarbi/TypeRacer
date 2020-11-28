@@ -4,6 +4,7 @@ var complete = document.getElementById("complete");
 var currentComplete = document.getElementById("currComplete");
 var currentUpcoming = document.getElementById("currUpcoming")
 var gameNumber = document.getElementById("gameNumber");
+var gamesList = document.getElementById("gamesList");
 
 var quoteText = "Turmoil has engulfed the Galactic Republic. The taxation of trade routes to outlying star systems is in dispute. Hoping to resolve the matter with a blockade of deadly battleships, the greedy Trade Federation has stopped all shipping to the small planet of Naboo."
 var index = 0;
@@ -62,8 +63,9 @@ function getGames() {
     websocket.send(JSON.stringify(msg))
 }
 
-function showGames() {
-
+function showGames(msg) {
+    console.log(msg);
+    // todo: gamesList.innerHTML = ...
 }
 
 
