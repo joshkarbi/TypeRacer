@@ -4,6 +4,7 @@ main.py
 Create a websocket server.
 Listen for messages of types:
 - New game request: {"type": "new_game"}
+- List games request: {"type": "get_games"}
 - Join game request: {"type": "join_game", "game_ID": 0}
 - Game updates: {"type": "update", "game_ID": "", "player_ID":"", "word_num": 0}
 
@@ -11,6 +12,8 @@ Send back responses:
 
 If we got a new game request:
     - New game creation: {"type": "new_game", "created": "success", "game_ID": "", "paragraph": ""}
+If we got a list games request: 
+    - Send back list {"type": "get_games": "games": ["ID-1", "ID-2", "ID-3", ... ]}
 If we got a join game request:
     - Join game successful: {"type": "join_game", "game_ID": "", "paragraph": "", "player_IDs": ["", "", ""] }
 If we got a game update:
