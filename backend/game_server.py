@@ -46,6 +46,7 @@ class GameServer:
         self.rooms[game_ID].append(ws)
 
     async def handle_new_game(self, ws, message: Dict[Any, Any]):
+        # TODO: Generate a unique string ID
         new_game_ID = str(random.randint(1, 5)) # For testing
 
         await self.__register(ws, new_game_ID)
@@ -92,3 +93,8 @@ class GameServer:
     async def handle_game_update(self, ws, message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
         return json.dumps(response)
+
+    def shutdown(self):
+        # Kill all processing
+        for key in self.game_objs.keys():
+            self.send_queues.get(key).put({"type": "kill_game"})

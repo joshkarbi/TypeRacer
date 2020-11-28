@@ -90,4 +90,5 @@ if __name__=="__main__":
         input("Enter anything to kill the server...\n")
 
         print("Closing down server . . . ")
+        game_server.shutdown()
         main_event_loop.stop()
