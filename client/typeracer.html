@@ -10,17 +10,17 @@
         <div id="output"></div>
 
         <h3>TypeRacer!</h3>
-        <button onclick="newGame()">New Game</button>
-        <button onclick="joinGame(1)">Join Game 1</button>
+        <button onclick="getGames()">Get Games</button>
+        <button onclick="newGame()">New Game</button><br>
+        <input id="gameNumber">
+        <button onclick="joinGame()">Join Game</button>
         <div id="quote">
             <span id="complete"></span>
             <span id="currComplement"></span>
             <span id="currComplement"></span>
             <span id="upcoming"></span>
         </div>
-        <input onkeypress="keypress(event)">
-
-
+        <input onkeypress="keypress(event)" id="typingbox">
         <script src="scripts.js"></script>
     </body>
 </html>
