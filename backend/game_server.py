@@ -51,7 +51,11 @@ class GameServer:
         self.send_queues = {} # Map game ID to a sending multiprocessing Queue
         self.recv_queues = {} # Map a game ID to a sending multiprocessing Queue
         self.game_objs = {} # Map a game ID to a Game instance
-        self.player_states = defaultdict(dict) # Map game ID -> player ID -> status
+        self.player_states = defaultdict(dict) # Map game ID -> player ID ->  [
+                            #     {"player_ID": 0, "progress": 0.50},
+                            #     {"player_ID": 1, "progress": 0.66}
+                            # ]  
+        self.game_player_percentages = defaultdict(list) # map a game ID to list of id to percentage done
 
     async def __register(self, ws, game_ID: str):
         self.rooms[game_ID].append(ws)
@@ -103,6 +107,9 @@ class GameServer:
         response = {"type": "get_games", "games": list(self.rooms.keys())}
         return json.dumps(response)
 
+    async def send_to_all_in_game(self, game_ID: str, message: Any):
+        for ws in self.rooms[game_ID]:
+            await ws.send(json.dumps(message))
 
     async def handle_player_status(self, message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
@@ -115,20 +122,47 @@ class GameServer:
         
         if all(self.player_states[game_ID][x]==PlayerStatus.READY for x in self.player_states[game_ID].keys()):
             print("All players are ready in game ID", game_ID, "!")
-            for ws in self.rooms[game_ID]:
-                message = {"type": "game_status", "game_ID": game_ID,"status": "countdown", "time_length_seconds": 3}
-                await ws.send(json.dumps(message))
+
+            # Tell players starting in 3 seconds
+            message = {"type": "game_status", "game_ID": game_ID,"status": "countdown", "time_length_seconds": 3}
+            await self.send_to_all_in_game(game_ID, message)
             
             await asyncio.sleep(3)
 
             # Send game has started
-            for ws in self.rooms[game_ID]:
-                message = {"type": "game_status", "game_ID": game_ID, "status": "started"}
-                await ws.send(json.dumps(message))
+            message = {"type": "game_status", "game_ID": game_ID, "status": "started"}
+            await self.send_to_all_in_game(game_ID, message)
+            for x in self.player_states[game_ID].keys():
+                self.game_player_percentages[game_ID].append ({"player_ID": x, "progress": 0.0})
 
-    async def handle_game_update(self, ws, message: Dict[Any, Any]):
+    async def handle_game_update(self,  message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
-        return json.dumps(response)
+        print(message)
+        # Expect: {"type": "update", "game_ID": "", "player_ID":"", "word_num": 0}
+        game_ID = message.get("game_ID")
+        if game_ID not in self.game_objs.keys():
+            # do nothing for now
+            pass
+        else:
+            # The game exists.
+            # Send the update to the game process
+            self.send_queues[game_ID].put(message)
+            seen_response = False
+            while seen_response==False:
+                seen_response = True
+                response = self.recv_queues[game_ID].get()
+                print(response)
+
+                # response looks like {"player_ID": playerID, "progress": percentComplete}
+                for player in range(len(self.game_player_percentages[game_ID])):
+                    if self.game_player_percentages[game_ID][player].get("player_ID") == response.get("player_ID"):
+                        self.game_player_percentages[game_ID][player]["progress"] = response.get("progress")
+
+                if response.get("progress") == 100.0:
+                    # The game is done!
+                    await self.send_to_all_in_game(game_ID, {"type": "update", "game_ID": game_ID, "status": "finished", "winner_ID": response.get("player_ID")})
+                else:
+                    await self.send_to_all_in_game(game_ID,{"type":"update", "game_ID": game_ID, "status": "in_progress", "updates": self.game_player_percentages[game_ID] })
 
     def shutdown(self):
         # Kill all processing

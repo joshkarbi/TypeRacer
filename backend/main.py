@@ -29,7 +29,7 @@ If we got a game update:
     - Game finished: {"type: "update", "game_ID": "", "status": "finished", "winner_ID": 0}
 '''
 
-import asyncio, json, traceback
+import asyncio, json, traceback, sys
 import websockets, random
 from collections import defaultdict 
 from typing import Dict, List, Any
@@ -55,9 +55,8 @@ async def ws_connection_handle(websocket, path):
                 elif data.get("type") == "get_games":
                     await websocket.send( await game_server.handle_get_games(websocket, data) )
 
-                
                 elif data.get("type") == "update":
-                    await websocket.send( await game_server.handle_game_update(websocket, data) )
+                    await game_server.handle_game_update(data)
 
                 elif data.get("type") == "player_status":
                     await game_server.handle_player_status(data)
@@ -70,7 +69,9 @@ async def ws_connection_handle(websocket, path):
         print("Connection closed. Code", e.code, " reason", e.reason)
     
     except Exception as e:
-        await websocket.close()
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=10, file=sys.stdout)
+    
         print("Caught exception", e)
 
 

@@ -55,8 +55,8 @@ class Game:
                 self.isGameDone = True
 
             else:
-                playerID = message.player_ID
-                wordCount = message.word_num
+                playerID = message.get("player_ID")
+                wordCount = message.get("word_num")
                 playerProgress = self.updatePlayerProgress(playerID, wordCount)
                 self.qSend.put(playerProgress)
 
