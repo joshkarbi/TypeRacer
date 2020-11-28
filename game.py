@@ -47,6 +47,9 @@ class Game:
             if message.type == "join_game":
                 self.qSend.send(self.joinGame())
 
+            elif message.type == "kill_game":
+                self.isGameDone == True
+
             else:
                 playerID = message.player_ID
                 wordCount = message.word_num
