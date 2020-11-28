@@ -3,6 +3,7 @@ var upcoming = document.getElementById("upcoming");
 var complete = document.getElementById("complete");
 var currentComplete = document.getElementById("currComplete");
 var currentUpcoming = document.getElementById("currUpcoming")
+var gameNumber = document.getElementById("gameNumber");
 
 var quoteText = "Turmoil has engulfed the Galactic Republic. The taxation of trade routes to outlying star systems is in dispute. Hoping to resolve the matter with a blockade of deadly battleships, the greedy Trade Federation has stopped all shipping to the small planet of Naboo."
 var index = 0;
@@ -42,17 +43,27 @@ function onNewGame(msg) {
 }
 
 function joinGame(id) {
-    msg = {"type": "join_game", "game_id": id}
+    msg = {"type": "join_game", "game_id": gameNumber.value}
     websocket.send(JSON.stringify(msg))
 }
 
 function onJoinGame(msg) {
     console.log(msg);
+    // show the game paragraph and the other players
 }
 
 function getQuote() {
     upcoming.innerHTML = quoteText;
     complete.innerHTML = "";
+}
+
+function getGames() {
+    msg = {"type": "get_games"}
+    websocket.send(JSON.stringify(msg))
+}
+
+function showGames() {
+
 }
 
 
@@ -62,7 +73,7 @@ function onMessage(evt) {
         case "connected":
             console.log('Websocket connection successful');
             break;
-        case "games":
+        case "get_games":
             showGames(msg);
             break;
         case "new_game":
