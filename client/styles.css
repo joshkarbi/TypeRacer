@@ -1,30 +1,88 @@
 body {
-    text-align:center;
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+    "Lucida Sans", Arial, sans-serif;
+  text-align: center;
+}
+.car {
+  position: relative;
+  right: 30%;
+  height: 50px;
+  width: 75px;
+}
+.road {
+  width: 60%;
+  height: 12px;
+}
+div {
+  padding: 20px;
+}
+.wText {
+  font-style: normal;
+  color: white;
+  text-decoration: none;
+}
+.button {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 24px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: white;
+  background-color: green;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 8px grey;
+}
+.button:hover {
+  background-color: greenyellow;
 }
 
+.button:active {
+  background-color: greenyellow;
+  box-shadow: 0 5px darkgrey;
+  transform: translateY(5px);
+}
+.hero-image {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("motor-sports-hi.png");
+  height: 50%;
+
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+}
+h3 {
+  color: blueviolet;
+}
+.hero-text {
+  text-align: center;
+  color: white;
+}
 #quote {
-    font-size: 0px;
-    margin: auto;
-    text-align: left;
-    width: 600px;
-    border-style: solid;
-    padding: 12px;
+  font-size: 0px;
+  margin: auto;
+  text-align: left;
+  width: 600px;
+  border-style: solid;
+  padding: 12px;
 }
 
 #complete {
-    color: green;
-    font-size: 24px
+  color: green;
+  font-size: 24px;
 }
 
 #upcoming {
-    color: black;
-    font-size: 24px
+  color: black;
+  font-size: 24px;
 }
 
 #typingbox {
-    font-size: 24px;
-    width: 600px;
-    padding: 12px;
-    margin-top: 8px;
+  font-size: 24px;
+  width: 600px;
+  padding: 12px;
+  margin-top: 8px;
 }
-
