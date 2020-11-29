@@ -97,7 +97,7 @@ class GameServer:
                 players = list(range(joined["player_ID"] + 1) )
                 this_players_ID = players[-1]
 
-                response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_IDs": players  }     
+                response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_ID": this_players_ID, "all_player_IDs": players}     
                 self.player_states[game_ID][this_players_ID] = PlayerStatus.JOINED
 
                 return json.dumps(response)

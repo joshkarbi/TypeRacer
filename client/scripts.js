@@ -6,6 +6,7 @@ var currentUpcoming = document.getElementById("currUpcoming")
 var gameNumber = document.getElementById("gameNumber");
 var gamesList = document.getElementById("gamesList");
 var playersDiv = document.getElementById("players");
+var typingbox = document.getElementById("typingbox");
 
 var index = 0;
 
@@ -22,14 +23,14 @@ function webSocket() {
 }
 
 function keypress(event) {
-    // websocket.send(event.key)
-
     const key = event.key;
     if (key == upcoming.innerHTML[0]) {
         complete.innerHTML += key;
         upcoming.innerHTML = upcoming.innerHTML.substring(1);
         ++index;
     }
+    // websocket.send(event.key)
+    // Expect: {"type": "update", "game_ID": "", "player_ID":"", "word_num": 0}
 }
 
 function newGame() {
@@ -46,20 +47,41 @@ function joinGame(id) {
     websocket.send(JSON.stringify(msg))
 }
 
+var currentGame;
+var myPlayerID;
 function onJoinGame(msg) {
+    typingbox.setAttribute("disabled","disabled");
+    typingbox.value = "";
     upcoming.innerHTML = msg.paragraph;
     complete.innerHTML = "";
     playersDiv.innerHTML = "";
-    const heading = document.createElement("h3").innerHTML = "Game " + msg.game_ID + ". Get Ready!";
+    currentGame = msg.game_ID;
+    myPlayerID = msg.player_ID;
+    const heading = document.createElement("h3");
+    heading.innerHTML = "Game " + currentGame + ". You are Player " + myPlayerID;
     playersDiv.append(heading);
-    msg.player_IDs.forEach(player => {
+    const readyButton = document.createElement("button");
+    readyButton.setAttribute("onclick", "readyup()")
+    readyButton.innerHTML = "Click when ready";
+    playersDiv.append(readyButton);
+    msg.all_player_IDs.forEach(player => {
         const p = document.createElement("div");
         p.setAttribute("class", "player");
-        const sp = document.createElement("span").innerHTML = "Player " + player;
+        const sp = document.createElement("span");
+        if (player == myPlayerID) {
+            sp.innerHTML = "Player " + player + " (YOU)";
+        } else {
+            sp.innerHTML = "Player " + player;
+        }
         p.append(sp);
         playersDiv.append(p);
     });
 
+}
+
+function readyup() {
+    msg = {"type": "player_status", "game_ID": currentGame, "player_ID": myPlayerID, "status": "ready"}
+    websocket.send(JSON.stringify(msg));
 }
 
 function getGames() {
@@ -79,6 +101,22 @@ function showGames(msg) {
     }
 }
 
+async function onGameStatus(msg) {
+    var cntdown = document.createElement("h3");
+    playersDiv.append(cntdown);
+    if (msg.status == "countdown") {
+        var t = msg.time_length_seconds;
+        while (t > 0) {
+            cntdown.innerHTML = t--;
+            await sleep(1000);
+        }
+        cntdown.innerHTML = "GO";
+    }
+    else if (msg.status == "started") {
+        typingbox.removeAttribute("disabled");
+    }
+}
+
 function onMessage(evt) {
     const msg = JSON.parse(evt.data);
     switch(msg.type) {
@@ -93,6 +131,9 @@ function onMessage(evt) {
             break;
         case "join_game":
             onJoinGame(msg);
+            break;
+        case "game_status":
+            onGameStatus(msg);
             break;
     }
 }
@@ -110,6 +151,10 @@ function onClose(evt) {
 // websocket event handlers for errors
 function onError(evt) {
     console.log(evt.data);
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 window.addEventListener("load", init, false);
