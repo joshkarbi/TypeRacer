@@ -43,10 +43,8 @@ class PlayerStatus(Enum):
 
 class GameServer:
     def __init__(self):
-        self.jobs = []
         self.game_ids = []
         self.rooms = defaultdict(list) # map a game ID to a list of websockets
-        self.responses = {} # Map a game ID to a multiprocessing.Queue used to stream responses back from the game processor
 
 
         self.send_queues = {} # Map game ID to a sending multiprocessing Queue
@@ -77,7 +75,6 @@ class GameServer:
 
         # We set the target of a process to call the run (start the game)
         p = Process(target=this_game.run)
-        self.jobs.append(p)
         p.start()
             
         response = json.dumps({"type": "new_game", "created": "success", "game_ID": str(new_game_ID), "paragraph": this_game.paragraph})
@@ -137,6 +134,14 @@ class GameServer:
             for x in self.player_states[game_ID].keys():
                 self.game_player_percentages[game_ID].append ({"player_ID": x, "progress": 0.0})
 
+    def __handle_finished_game(self, game_ID):
+        self.game_ids.remove(game_ID)
+        self.send_queues.pop(game_ID)
+        self.recv_queues.pop(game_ID)
+        self.game_objs.pop(game_ID)
+        self.player_states.pop(game_ID)
+        self.game_player_percentages.pop(game_ID) # map a game ID to list of id to percentage done
+
     async def handle_game_update(self,  message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
         print(message)
@@ -163,7 +168,8 @@ class GameServer:
                 if response.get("progress") == 100.0:
                     # The game is done!
                     await self.send_to_all_in_game(game_ID, {"type": "update", "game_ID": game_ID, "status": "finished", "winner_ID": response.get("player_ID")})
-                    self.game_ids.remove(game_ID)
+                    self.__handle_finished_game(game_ID)
+                    print("Remaining games: ", self.game_ids)
                 else:
                     await self.send_to_all_in_game(game_ID,{"type":"update", "game_ID": game_ID, "status": "in_progress", "updates": self.game_player_percentages[game_ID] })
 

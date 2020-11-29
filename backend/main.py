@@ -60,6 +60,10 @@ async def ws_connection_handle(websocket, path):
 
                 elif data.get("type") == "player_status":
                     await game_server.handle_player_status(data)
+                
+                elif data.get("type") == "disconnect":
+                    await websocket.send(json.dumps({"message": "Closing your connection."}))
+                    await websocket.close()
 
             except json.JSONDecodeError as e:
                 print("Failed to parse JSON from client:", message)
@@ -74,30 +78,40 @@ async def ws_connection_handle(websocket, path):
     
         print("Caught exception", e)
 
+async def echo_server(stop, config):
+    async with websockets.serve(ws_connection_handle, host=config["host"], port=config["port"], origins=config["origins"] if len(config["origins"])>0 else None):
+        pass
 
-def ws_handle(loop):
-    loop.run_forever()
+
+import signal
+def ws_handle():
+    input("Enter anything to kill server...")
+    signal.alarm(3)
+    print("Exiting in 3 seconds . . .")
+
 
 if __name__=="__main__":
     with open("config.json") as config_file:
         config = json.load(config_file)
+
+        async def echo_server(stop):
+            async with websockets.serve(ws_connection_handle, host=config["host"], port=config["port"], origins=config["origins"] if len(config["origins"])>0 else None):
+                await stop
+
+        loop = asyncio.get_event_loop()
+
+        # The stop condition is set when receiving SIGALRM signal.
+        stop = loop.create_future()
+        loop.add_signal_handler(signal.SIGALRM, stop.set_result, None)
+
+        # Run the server until user enters some stdin input.
         print("Initializing TypeRacer WS Server!")
 
-        # Create a thread to handle the WS server and its async event loop
-        flag = Event()
+        # Thread that listens for user stdin and generates the alarm signal.
+        listener_thread = Thread(target=ws_handle)
+        listener_thread.start()
 
+        loop.run_until_complete(echo_server(stop))
 
-        main_event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(main_event_loop)
-        start_server = websockets.serve(ws_connection_handle, host=config["host"], port=config["port"], origins=config["origins"] if len(config["origins"])>0 else None)
-        server =  main_event_loop.run_until_complete(start_server)
-
-        ws_handler_thread = Thread(target=ws_handle, args=[main_event_loop])
-        ws_handler_thread.start()
-        
-        input("Enter anything to kill the server...\n")
-
-        print("Closing down server . . .")
         game_server.shutdown()
-        server.close()
-        main_event_loop.stop()
+        listener_thread.join()
