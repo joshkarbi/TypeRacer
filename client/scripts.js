@@ -5,8 +5,8 @@ var currentComplete = document.getElementById("currComplete");
 var currentUpcoming = document.getElementById("currUpcoming")
 var gameNumber = document.getElementById("gameNumber");
 var gamesList = document.getElementById("gamesList");
+var playersDiv = document.getElementById("players");
 
-var quoteText = "Turmoil has engulfed the Galactic Republic. The taxation of trade routes to outlying star systems is in dispute. Hoping to resolve the matter with a blockade of deadly battleships, the greedy Trade Federation has stopped all shipping to the small planet of Naboo."
 var index = 0;
 
 function init() {
@@ -19,8 +19,6 @@ function webSocket() {
     websocket.onclose = function(evt) { onClose(evt) };
     websocket.onmessage = function(evt) { onMessage(evt) };
     websocket.onerror = function(evt) { onError(evt) };
-
-    getQuote();
 }
 
 function keypress(event) {
@@ -44,18 +42,24 @@ function onNewGame(msg) {
 }
 
 function joinGame(id) {
-    msg = {"type": "join_game", "game_id": gameNumber.value}
+    msg = {"type": "join_game", "game_ID": gameNumber.value}
     websocket.send(JSON.stringify(msg))
 }
 
 function onJoinGame(msg) {
-    console.log(msg);
-    // show the game paragraph and the other players
-}
-
-function getQuote() {
-    upcoming.innerHTML = quoteText;
+    upcoming.innerHTML = msg.paragraph;
     complete.innerHTML = "";
+    playersDiv.innerHTML = "";
+    const heading = document.createElement("h3").innerHTML = "Game " + msg.game_ID + ". Get Ready!";
+    playersDiv.append(heading);
+    msg.player_IDs.forEach(player => {
+        const p = document.createElement("div");
+        p.setAttribute("class", "player");
+        const sp = document.createElement("span").innerHTML = "Player " + player;
+        p.append(sp);
+        playersDiv.append(p);
+    });
+
 }
 
 function getGames() {
@@ -64,10 +68,16 @@ function getGames() {
 }
 
 function showGames(msg) {
-    console.log(msg);
-    // todo: gamesList.innerHTML = ...
+    let games = "";
+    msg.games.forEach(g => {
+        games += g + ", ";
+    })
+    if (games.length == 0) {
+        gamesList.innerHTML = "No games found"
+    } else {
+        gamesList.innerHTML = games;
+    }
 }
-
 
 function onMessage(evt) {
     const msg = JSON.parse(evt.data);
