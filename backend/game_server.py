@@ -35,6 +35,7 @@ from threading import Thread
 from game import Game
 from multiprocessing import Process, Queue
 from enum import Enum
+from uuid import uuid4
 
 class PlayerStatus(Enum):
     JOINED=0
@@ -60,8 +61,10 @@ class GameServer:
         self.rooms[game_ID].append(ws)
 
     async def handle_new_game(self, ws, message: Dict[Any, Any]):
-        # TODO: Generate a unique string ID
-        new_game_ID = str(random.randint(1, 5)) # For testing
+        # Generate a unique string ID
+        new_game_ID = str(uuid4())
+        while new_game_ID in self.game_ids:
+            new_game_ID = str(uuid4())
         self.game_ids.append(new_game_ID)
 
         # Fork process to run the game
@@ -99,8 +102,7 @@ class GameServer:
 
                 response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_ID": this_players_ID, "all_player_IDs": players}     
                 self.player_states[game_ID][this_players_ID] = PlayerStatus.JOINED
-
-                return json.dumps(response)
+                await self.send_to_all_in_game(game_ID, response)
 
     async def handle_get_games(self, ws, message: Dict[Any, Any]):
         response = {"type": "get_games", "games": self.game_ids}

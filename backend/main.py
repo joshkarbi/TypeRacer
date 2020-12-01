@@ -16,7 +16,7 @@ If we got a new game request:
 If we got a list games request: 
     - Send back list {"type": "get_games": "games": ["ID-1", "ID-2", "ID-3", ... ]}
 If we got a join game request:
-    - Join game successful: {"type": "join_game", "game_ID": "", "paragraph": "", "player_IDs": ["", "", ""] }
+    - Join game successful (will send to all players in the game): {"type": "join_game", "game_ID": "", "paragraph": "", "player_IDs": ["", "", ""] }
 When starting the game:
     - All players are ready: {"type": "game_status", "game_ID": "","status": "countdown", "time_length_seconds": 3}
     - Game started: {"type": "game_status", "game_ID": "","status": "started"}
@@ -50,7 +50,7 @@ async def ws_connection_handle(websocket, path):
                     await websocket.send( await game_server.handle_new_game(websocket, data) )
 
                 elif data.get("type") == "join_game":
-                    await websocket.send( await game_server.handle_join_game(websocket, data) )
+                    await game_server.handle_join_game(websocket, data)
 
                 elif data.get("type") == "get_games":
                     await websocket.send( await game_server.handle_get_games(websocket, data) )

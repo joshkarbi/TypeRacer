@@ -2,8 +2,9 @@
 
 ### Todo
 ##### Backend
-- When a player joins a game, send the updated players list to the rest of the players in the game
-- Fix game numbers so that they don't repeat (currently its a randbetween(1,5))
+- Destroy running games if they timeout (i.e. nobody joins after some time)
+- Confirm player disconnects are handled cleanly
+
 ##### Frontend
 - Input box logic: when a wrong character is entered add it to a queue. Backspace key event pops a character from the queue
 - Clear text box after each correct word
