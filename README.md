@@ -4,6 +4,4 @@
 ##### Backend
 - Destroy running games if they timeout (i.e. nobody joins after some time)
 - Confirm player disconnects are handled cleanly
-
-##### Frontend
-- Display player progress in response to progress update mnessages
+- When a player joins another game, they are not removed from their previous game, so they continue to get game updates from the previous game they were in (non-critical to fix since front end compares game id before updating UI)

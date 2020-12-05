@@ -92,8 +92,29 @@ function onJoinGame(msg) {
         }
         p.append(sp);
         playersDiv.append(p);
+        const progress = document.createElement("span");
+        progress.setAttribute("id", "progress" + player)
+        progress.innerHTML = "Progress: 0 %";
+        p.append(progress);
     });
+}
 
+function onUpdate(msg) {
+    if (currentGame == msg.game_ID) {
+        if (msg.status == 'in_progress') {
+            msg.updates.forEach(update => {
+                let prog = document.getElementById("progress" + update.player_ID);
+                prog.innerHTML = "Progress: " + update.progress + " %";
+            })
+        }
+        else if (msg.status == 'finished') {
+            let prog = document.getElementById("progress" + msg.winner_ID);
+            prog.innerHTML = "Progress: 100 %";
+            let gameStatus = document.getElementById("gamestatus");
+            let announcement = "Player " + msg.winner_ID + " is the winner!";
+            gameStatus.innerHTML = announcement.fontcolor("blue");
+        }
+    }
 }
 
 function readyup() {
@@ -119,7 +140,8 @@ function showGames(msg) {
 }
 
 async function onGameStatus(msg) {
-    var cntdown = document.createElement("h3");
+    const cntdown = document.createElement("h3");
+    cntdown.setAttribute("id","gamestatus");
     playersDiv.append(cntdown);
     if (msg.status == "countdown") {
         wrongKeys = [];
@@ -153,6 +175,9 @@ function onMessage(evt) {
             break;
         case "game_status":
             onGameStatus(msg);
+            break;
+        case "update":
+            onUpdate(msg);
             break;
     }
 }
