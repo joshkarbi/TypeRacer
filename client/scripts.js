@@ -1,4 +1,4 @@
-var wsUri = "ws://localhost:6789";
+var wsUri = "ws://" + document.documentURI +":6789";
 var upcoming = document.getElementById("upcoming");
 var complete = document.getElementById("complete");
 var currentComplete = document.getElementById("currComplete");
