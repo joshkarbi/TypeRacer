@@ -1,4 +1,4 @@
-var wsUri = document.documentURI.indexOf("TypeRacer")>0 ? "ws://localhost:6789" : "ws://" + document.documentURI +":6789";
+var wsUri = document.documentURI.indexOf("TypeRacer")>0 ? "ws://localhost:6789" : "ws://18.215.229.34:6789";
 var upcoming = document.getElementById("upcoming");
 var complete = document.getElementById("complete");
 var currentComplete = document.getElementById("currComplete");
