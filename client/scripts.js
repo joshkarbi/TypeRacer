@@ -23,17 +23,25 @@ function webSocket() {
 }
 
 let wrongKeys = [];
+let wordNum = 0;
 function keypress(event) {
     const key = event.key;
     if (key == upcoming.innerHTML[0] && wrongKeys.length == 0) {
         complete.innerHTML += key;
         upcoming.innerHTML = upcoming.innerHTML.substring(1);
         ++index;
+        if (key == ' ') {
+            typingbox.value = "";
+        }
+        if (upcoming.innerHTML[0] == ' ' || upcoming.innerHTML.length == 0) {
+            msg = {"type": "update", "game_ID": currentGame, "player_ID": myPlayerID, "word_num": ++wordNum};
+            websocket.send(JSON.stringify(msg));
+        }
     }
     else if (key == 'Backspace') {
         wrongKeys.pop(key);
     }
-    else if (key != 'Shift'){
+    else if (key != 'Shift' && key != 'Alt' && key != 'Tab' && key != 'CapsLock' && key != 'Enter') {
         wrongKeys.push(key);
     }
 }
@@ -59,7 +67,7 @@ function onJoinGame(msg) {
         myPlayerID = msg.player_ID;
         currentGame = msg.game_ID;
     }
-    
+
     typingbox.setAttribute("disabled","disabled");
     typingbox.value = "";
     upcoming.innerHTML = msg.paragraph;
@@ -114,6 +122,8 @@ async function onGameStatus(msg) {
     var cntdown = document.createElement("h3");
     playersDiv.append(cntdown);
     if (msg.status == "countdown") {
+        wrongKeys = [];
+        wordNum = 0;
         var t = msg.time_length_seconds;
         while (t > 0) {
             cntdown.innerHTML = t--;
