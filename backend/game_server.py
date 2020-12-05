@@ -26,7 +26,7 @@ If we got a game update:
     - Game finished: {"type: "update", "game_ID": "", "status": "finished", "winner_ID": 0}
 '''
 
-import asyncio, json, traceback
+import asyncio, json, traceback, sys
 import websockets, random
 from collections import defaultdict 
 from typing import Dict, List, Any
@@ -61,26 +61,32 @@ class GameServer:
         self.rooms[game_ID].append(ws)
 
     async def handle_new_game(self, ws, message: Dict[Any, Any]):
-        # Generate a unique string ID
-        new_game_ID = str(uuid4())
-        while new_game_ID in self.game_ids:
+        max_num_games = json.load(open("config.json")).get("max_concurrent_games", sys.maxsize)
+
+        if len(self.game_ids) >= max_num_games:
+            # Do not create the game
+            response = json.dumps({"type": "new_game", "created": "failed"})
+        else:
+            # Generate a unique string ID
             new_game_ID = str(uuid4())
-        self.game_ids.append(new_game_ID)
+            while new_game_ID in self.game_ids:
+                new_game_ID = str(uuid4())
+            self.game_ids.append(new_game_ID)
 
-        # Fork process to run the game
-        this_game_sending = Queue()
-        this_game_recving = Queue()
+            # Fork process to run the game
+            this_game_sending = Queue()
+            this_game_recving = Queue()
 
-        this_game = Game(this_game_sending, this_game_recving)
-        self.send_queues[new_game_ID] = this_game_sending
-        self.recv_queues[new_game_ID] = this_game_recving
-        self.game_objs[new_game_ID] = this_game
+            this_game = Game(this_game_sending, this_game_recving)
+            self.send_queues[new_game_ID] = this_game_sending
+            self.recv_queues[new_game_ID] = this_game_recving
+            self.game_objs[new_game_ID] = this_game
 
-        # We set the target of a process to call the run (start the game)
-        p = Process(target=this_game.run)
-        p.start()
-            
-        response = json.dumps({"type": "new_game", "created": "success", "game_ID": str(new_game_ID), "paragraph": this_game.paragraph})
+            # We set the target of a process to call the run (start the game)
+            p = Process(target=this_game.run)
+            p.start()
+                
+            response = json.dumps({"type": "new_game", "created": "success", "game_ID": str(new_game_ID), "paragraph": this_game.paragraph})
         return response
 
     async def handle_join_game(self, ws, message: Dict[Any, Any]):
@@ -132,7 +138,9 @@ class GameServer:
         if message.get("status") == "ready":
             self.player_states[game_ID][message.get("player_ID")] = PlayerStatus.READY
         
-        if all(self.player_states[game_ID][x]==PlayerStatus.READY for x in self.player_states[game_ID].keys()):
+        if all(self.player_states[game_ID][x]==PlayerStatus.READY for x in self.player_states[game_ID].keys()) and \
+            len(self.player_states[game_ID]) > 1:
+
             print("All players are ready in game ID", game_ID, "!")
 
             # Tell players starting in 3 seconds
