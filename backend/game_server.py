@@ -156,13 +156,16 @@ class GameServer:
                 self.game_player_percentages[game_ID].append ({"player_ID": x, "progress": 0.0})
 
     def __handle_finished_game(self, game_ID):
-        self.game_ids.remove(game_ID)
-        self.send_queues.pop(game_ID)
-        self.recv_queues.pop(game_ID)
-        self.game_objs.pop(game_ID)
-        self.player_states.pop(game_ID)
-        self.game_player_percentages.pop(game_ID) # map a game ID to list of id to percentage done
-
+        try:
+            self.game_ids.remove(game_ID)
+            self.send_queues.pop(game_ID)
+            self.recv_queues.pop(game_ID)
+            self.game_objs.pop(game_ID)
+            del self.player_states[game_ID]
+            self.game_player_percentages.pop(game_ID) # map a game ID to list of id to percentage done
+        except:
+            pass
+        
     async def handle_game_update(self,  message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
         print(message)
