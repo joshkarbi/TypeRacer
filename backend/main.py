@@ -69,8 +69,8 @@ async def ws_connection_handle(websocket, path):
                 print("Failed to parse JSON from client:", message)
                 await websocket.send(json.dumps({"error": "Invalid JSON."}))
         
-    except websockets.exceptions.ConnectionClosed as e:
-        print("Connection closed. Code", e.code, " reason", e.reason)
+            except websockets.exceptions.ConnectionClosed as e:
+                print("Connection closed. Code", e.code, " reason", e.reason)
     
     except Exception as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()

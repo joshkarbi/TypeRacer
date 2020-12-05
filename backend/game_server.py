@@ -110,7 +110,10 @@ class GameServer:
 
     async def send_to_all_in_game(self, game_ID: str, message: Any):
         for ws in self.rooms[game_ID]:
-            await ws.send(json.dumps(message))
+            try:
+                await ws.send(json.dumps(message))
+            except websockets.WebSocketException as e:
+                self.rooms[game_ID].remove(ws)
 
     async def handle_player_status(self, message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
