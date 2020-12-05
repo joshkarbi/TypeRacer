@@ -102,7 +102,7 @@ if __name__=="__main__":
 
         # The stop condition is set when receiving SIGALRM signal.
         stop = loop.create_future()
-        loop.add_signal_handler(signal.SIGALRM, stop.set_result, None)
+        # loop.add_signal_handler(signal.SIGALRM, stop.set_result, None)
 
         # Run the server until user enters some stdin input.
         print("Initializing TypeRacer WS Server!")

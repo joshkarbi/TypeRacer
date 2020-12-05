@@ -22,15 +22,20 @@ function webSocket() {
     websocket.onerror = function(evt) { onError(evt) };
 }
 
+let wrongKeys = [];
 function keypress(event) {
     const key = event.key;
-    if (key == upcoming.innerHTML[0]) {
+    if (key == upcoming.innerHTML[0] && wrongKeys.length == 0) {
         complete.innerHTML += key;
         upcoming.innerHTML = upcoming.innerHTML.substring(1);
         ++index;
     }
-    // websocket.send(event.key)
-    // Expect: {"type": "update", "game_ID": "", "player_ID":"", "word_num": 0}
+    else if (key == 'Backspace') {
+        wrongKeys.pop(key);
+    }
+    else if (key != 'Shift'){
+        wrongKeys.push(key);
+    }
 }
 
 function newGame() {
@@ -50,13 +55,16 @@ function joinGame(id) {
 var currentGame;
 var myPlayerID;
 function onJoinGame(msg) {
+    if (currentGame == null || currentGame != msg.game_ID) {
+        myPlayerID = msg.player_ID;
+        currentGame = msg.game_ID;
+    }
+    
     typingbox.setAttribute("disabled","disabled");
     typingbox.value = "";
     upcoming.innerHTML = msg.paragraph;
     complete.innerHTML = "";
     playersDiv.innerHTML = "";
-    currentGame = msg.game_ID;
-    myPlayerID = msg.player_ID;
     const heading = document.createElement("h3");
     heading.innerHTML = "Game " + currentGame + ". You are Player " + myPlayerID;
     playersDiv.append(heading);
@@ -64,6 +72,7 @@ function onJoinGame(msg) {
     readyButton.setAttribute("onclick", "readyup()")
     readyButton.innerHTML = "Click when ready";
     playersDiv.append(readyButton);
+
     msg.all_player_IDs.forEach(player => {
         const p = document.createElement("div");
         p.setAttribute("class", "player");
