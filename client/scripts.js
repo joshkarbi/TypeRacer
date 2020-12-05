@@ -1,4 +1,4 @@
-var wsUri = "ws://" + document.documentURI +":6789";
+var wsUri = document.documentURI.indexOf("TypeRacer")>0 ? "ws://localhost:6789" : "ws://" + document.documentURI +":6789";
 var upcoming = document.getElementById("upcoming");
 var complete = document.getElementById("complete");
 var currentComplete = document.getElementById("currComplete");
@@ -124,6 +124,11 @@ function readyup() {
 
 function getGames() {
     msg = {"type": "get_games"}
+    websocket.send(JSON.stringify(msg))
+}
+
+function quitGame() {
+    msg = {"type":"disconnect"}
     websocket.send(JSON.stringify(msg))
 }
 

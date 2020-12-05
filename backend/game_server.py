@@ -55,7 +55,10 @@ class GameServer:
                             #     {"player_ID": 0, "progress": 0.50},
                             #     {"player_ID": 1, "progress": 0.66}
                             # ]  
+        self.ws_to_player_id = {}
         self.game_player_percentages = defaultdict(list) # map a game ID to list of id to percentage done
+
+        self.child_process = {}
 
     async def __register(self, ws, game_ID: str):
         self.rooms[game_ID].append(ws)
@@ -84,8 +87,10 @@ class GameServer:
 
             # We set the target of a process to call the run (start the game)
             p = Process(target=this_game.run)
+            p.daemon = True
             p.start()
-                
+            self.child_process[new_game_ID] = p
+
             response = json.dumps({"type": "new_game", "created": "success", "game_ID": str(new_game_ID), "paragraph": this_game.paragraph})
         return response
 
@@ -94,21 +99,32 @@ class GameServer:
         if game_ID not in self.game_objs.keys():
             response = {"error": "The provided game ID does not exist."}
         else:
-            # The game exists, add this websocket to that room.
-            await self.__register(ws, game_ID)
+            # The game exists, add this websocket to that room if its not already in a room.
+            if ws not in self.rooms[game_ID]:
+                await self.__register(ws, game_ID)
 
-            # Send a join game message to the game process
-            self.send_queues[game_ID].put(message)
-            seen_response = False
-            while seen_response==False:
-                seen_response = True
-                joined = self.recv_queues[message.get("game_ID")].get()
-                players = list(range(joined["player_ID"] + 1) )
-                this_players_ID = players[-1]
+                # Send a join game message to the game process
+                self.send_queues[game_ID].put(message)
+                seen_response = False
+                while seen_response==False:
+                    seen_response = True
+                    joined = self.recv_queues[message.get("game_ID")].get()
+                    players = list(range(joined["player_ID"] + 1) )
+                    this_players_ID = players[-1]
+                    self.ws_to_player_id[ws] = this_players_ID
+                    players = []
+                    for ws in self.rooms[message.get("game_ID")]:
+                        players.append(self.ws_to_player_id[ws])
 
-                response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_ID": this_players_ID, "all_player_IDs": players}     
-                self.player_states[game_ID][this_players_ID] = PlayerStatus.JOINED
-                await self.send_to_all_in_game(game_ID, response)
+                    response = {"type": "join_game", "game_ID": game_ID, "paragraph": joined["paragraph"], "player_ID": this_players_ID, "all_player_IDs": players}     
+                    self.player_states[game_ID][this_players_ID] = PlayerStatus.JOINED
+                    await self.send_to_all_in_game(game_ID, response)
+
+    async def handle_disconnect(self, ws):
+        for id in self.game_ids:
+            if ws in self.rooms.get(id):
+                self.rooms[id].remove(ws)
+                del self.player_states[id][self.ws_to_player_id[ws]]
 
     async def handle_get_games(self, ws, message: Dict[Any, Any]):
         # Check for any games that have timed out (i.e. no messaged in past 5 minutes)
@@ -158,14 +174,18 @@ class GameServer:
     def __handle_finished_game(self, game_ID):
         try:
             self.game_ids.remove(game_ID)
-            self.send_queues.pop(game_ID)
-            self.recv_queues.pop(game_ID)
-            self.game_objs.pop(game_ID)
+            del self.send_queues[game_ID]
+            del self.recv_queues[game_ID]
+            del self.game_objs[game_ID]
             del self.player_states[game_ID]
-            self.game_player_percentages.pop(game_ID) # map a game ID to list of id to percentage done
+            del self.game_player_percentages[game_ID] # map a game ID to list of id to percentage done
+            print("Joining child")
+            self.child_process[game_ID].join()
+            print("Joined.")
+            del self.child_process[game_ID]
         except:
             pass
-        
+
     async def handle_game_update(self,  message: Dict[Any, Any]):
         response = {"error": "Not sure how to handle message.", "message": message}
         print(message)

@@ -64,6 +64,7 @@ async def ws_connection_handle(websocket, path):
                 elif data.get("type") == "disconnect":
                     await websocket.send(json.dumps({"message": "Closing your connection."}))
                     await websocket.close()
+                    await game_server.handle_disconnect(websocket)
 
             except json.JSONDecodeError as e:
                 print("Failed to parse JSON from client:", message)
