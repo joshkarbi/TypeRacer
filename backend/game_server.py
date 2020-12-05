@@ -105,6 +105,14 @@ class GameServer:
                 await self.send_to_all_in_game(game_ID, response)
 
     async def handle_get_games(self, ws, message: Dict[Any, Any]):
+        # Check for any games that have timed out (i.e. no messaged in past 5 minutes)
+        for id in self.game_ids:
+            if self.recv_queues[id].empty() == False and self.recv_queues[id].get()=="Done":
+                # Remove those
+                self.__handle_finished_game(id)
+                print("Removed ", id)
+        
+        # Send back all active games
         response = {"type": "get_games", "games": self.game_ids}
         return json.dumps(response)
 

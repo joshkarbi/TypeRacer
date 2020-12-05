@@ -1,5 +1,6 @@
 import json, random
 from multiprocessing import Queue
+from queue import Empty
 
 class Game:
 
@@ -45,25 +46,32 @@ class Game:
 
     def run(self):
         # Continuous loop until the game finishes
-        while not self.isGameDone:
+        try:
+            while not self.isGameDone:
 
-            # Recieve message from server parent
-            message = self.qRecv.get()
+                # Recieve message from server parent
+                message = self.qRecv.get(timeout=5*60)
 
-            # Execute joinGame() if that is the message type
-            if message.get("type") == "join_game":
-                self.qSend.put(self.joinGame())
+                # Execute joinGame() if that is the message type
+                if message.get("type") == "join_game":
+                    self.qSend.put(self.joinGame())
 
-            # Break this while loop if kill game is requested
-            elif message.get("type") == "kill_game":
-                self.isGameDone = True
+                # Break this while loop if kill game is requested
+                elif message.get("type") == "kill_game":
+                    self.isGameDone = True
 
-            # Otherwise assume the message is a player's progress update
-            else:
-                playerID = message.get("player_ID")
-                wordCount = message.get("word_num")
-                playerProgress = self.updatePlayerProgress(playerID, wordCount)
-                self.qSend.put(playerProgress)
+                # Otherwise assume the message is a player's progress update
+                else:
+                    playerID = message.get("player_ID")
+                    wordCount = message.get("word_num")
+                    playerProgress = self.updatePlayerProgress(playerID, wordCount)
+                    self.qSend.put(playerProgress)
+        
+        except Empty:
+            # Game timed out, clean up and exit.
+            print("Exiting game due to timeout.")
+            self.qSend.put("Done")
+            return
 
     # Return a new player id and the game's paragraph
     def joinGame(self):
