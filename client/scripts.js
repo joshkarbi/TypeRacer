@@ -203,6 +203,7 @@ async function onGameStatus(msg) {
     }
     else if (msg.status == "started") {
         typingbox.removeAttribute("disabled");
+        typingbox.focus();
     }
 }
 
