@@ -16,10 +16,20 @@ function init() {
 
 function webSocket() {
     websocket = new WebSocket(wsUri);
-    websocket.onopen = function(evt) { onOpen(evt) };
+    websocket.onopen = function(evt) { 
+        onOpen(evt);
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log("Joining game", urlParams.get("game_id"));
+        if (urlParams.get("game_id") != null) {
+            sleep(10);
+            joinGame(null, provided_id=urlParams.get("game_id"));
+        }
+    };
     websocket.onclose = function(evt) { onClose(evt) };
     websocket.onmessage = function(evt) { onMessage(evt) };
     websocket.onerror = function(evt) { onError(evt) };
+
+    
 }
 
 let wrongKeys = [];
@@ -53,10 +63,12 @@ function newGame() {
 
 function onNewGame(msg) {
     console.log(msg);
+    sleep(500);
+    joinGame(null, msg.game_ID);
 }
 
-function joinGame(id) {
-    msg = {"type": "join_game", "game_ID": gameNumber.value}
+function joinGame(id, provided_id=null) {
+    msg = {"type": "join_game", "game_ID": provided_id==null ? gameNumber.value : provided_id}
     websocket.send(JSON.stringify(msg))
 }
 
@@ -76,10 +88,25 @@ function onJoinGame(msg) {
     const heading = document.createElement("h3");
     heading.innerHTML = "Game " + currentGame + ". You are Player " + myPlayerID;
     playersDiv.append(heading);
+
+    const link = document.createElement("h4");
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("game_id") != null) {
+            var shareable_link = document.documentURI;
+    } else {
+        var shareable_link = document.documentURI + "?game_id=" + currentGame;
+    }
+    link.innerHTML = "Joinable game link: " + shareable_link;
+    link.id = "shareable_link"
+    playersDiv.append(link);
+
     const readyButton = document.createElement("button");
     readyButton.setAttribute("onclick", "readyup()")
     readyButton.innerHTML = "Click when ready";
     playersDiv.append(readyButton);
+
+    
+    document.querySelector("#enterGameArea").hidden = true;
 
     msg.all_player_IDs.forEach(player => {
         const p = document.createElement("div");
@@ -97,6 +124,8 @@ function onJoinGame(msg) {
         progress.innerHTML = "Progress: 0 %";
         p.append(progress);
     });
+
+
 }
 
 function onUpdate(msg) {

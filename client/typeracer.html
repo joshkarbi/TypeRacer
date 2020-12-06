@@ -19,14 +19,17 @@
         </div>
         <div class="content">
             <h3>Welcome to TypeRacer!</h3>
-            <button onclick="newGame()">New Game</button><br>
-            <button onclick="getGames()">Get Available Games</button>
-            <div>
-                <span>Available games:</span><span id="gamesList"></span>
-            </div>
-            <div>
-                <input id="gameNumber">
-                <button onclick="joinGame()">Join Game</button>
+
+            <div id="enterGameArea">
+                <button id="newGameButton" onclick="newGame()">New Game</button><br><br>
+                <button onclick="getGames()">Get Available Games</button>
+                <div>
+                    <span>Available games:</span><span id="gamesList"></span>
+                </div>
+                <div>
+                    <input id="gameNumber">
+                    <button onclick="joinGame()">Join Game</button>
+                </div>
             </div>
             
             <div id="players"></div>
