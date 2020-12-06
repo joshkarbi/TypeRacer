@@ -128,7 +128,7 @@ function onJoinGame(msg) {
         p.append(carDiv);
 
         const car = document.createElement("img");
-        car.setAttribute("src", "images/cars/car" + player + ".PNG");
+        car.setAttribute("src", "images/cars/car" + player % 4 + ".PNG");
         car.setAttribute("class", "cars");
         car.setAttribute("id", "car" + player);
         carDiv.append(car);
