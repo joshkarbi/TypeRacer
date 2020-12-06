@@ -122,7 +122,7 @@ class GameServer:
 
     async def handle_disconnect(self, ws):
         for id in self.game_ids:
-            if ws in self.rooms.get(id):
+            if ws in self.rooms.get(id, []):
                 self.rooms[id].remove(ws)
                 del self.player_states[id][self.ws_to_player_id[ws]]
 
