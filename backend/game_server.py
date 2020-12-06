@@ -103,12 +103,20 @@ class GameServer:
             if ws not in self.rooms[game_ID]:
                 await self.__register(ws, game_ID)
 
+                # Has this game timed out?
+                if self.recv_queues[game_ID].empty() == False and self.recv_queues[game_ID].get()=="Done":
+                    # Remove those
+                    self.__handle_finished_game(game_ID)
+                    print("Removed ", game_ID)
+                    return
+
                 # Send a join game message to the game process
                 self.send_queues[game_ID].put(message)
                 seen_response = False
                 while seen_response==False:
                     seen_response = True
                     joined = self.recv_queues[message.get("game_ID")].get()
+                    print("Joined : ", joined)
                     players = list(range(joined["player_ID"] + 1) )
                     this_players_ID = players[-1]
                     self.ws_to_player_id[ws] = this_players_ID
