@@ -73,11 +73,13 @@ h3 {
 #complete {
   color: green;
   font-size: 24px;
+  padding: 0px;
 }
 
 #upcoming {
   color: black;
   font-size: 24px;
+  padding: 0px;
 }
 
 #typingbox {
@@ -91,11 +93,29 @@ h3 {
   display:flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 600px;
+  width: 700px;
 }
 
 .player {
   padding: 8px 20px;
+  text-align:left;
+  width:660px;
+}
+
+.carDiv {
+  border-bottom-color: rgba(255, 208, 0);
+  border-bottom-style: dashed;
+  padding:8px;
+}
+
+.cars {
+  width: 60px;
+  position:relative;
+}
+
+span {
+  padding: 0px 4px;
+
 }
 
 .content {

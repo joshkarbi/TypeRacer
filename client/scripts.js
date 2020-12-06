@@ -105,7 +105,6 @@ function onJoinGame(msg) {
     readyButton.innerHTML = "Click when ready";
     playersDiv.append(readyButton);
 
-    
     document.querySelector("#enterGameArea").hidden = true;
 
     msg.all_player_IDs.forEach(player => {
@@ -123,6 +122,17 @@ function onJoinGame(msg) {
         progress.setAttribute("id", "progress" + player)
         progress.innerHTML = "Progress: 0 %";
         p.append(progress);
+
+        const carDiv = document.createElement("div");
+        carDiv.setAttribute("class", "carDiv");
+        p.append(carDiv);
+
+        const car = document.createElement("img");
+        car.setAttribute("src", "images/cars/car" + player + ".PNG");
+        car.setAttribute("class", "cars");
+        car.setAttribute("id", "car" + player);
+        carDiv.append(car);
+
     });
 
 
@@ -134,11 +144,15 @@ function onUpdate(msg) {
             msg.updates.forEach(update => {
                 let prog = document.getElementById("progress" + update.player_ID);
                 prog.innerHTML = "Progress: " + update.progress + " %";
+                let car = document.getElementById("car" + update.player_ID);
+                car.setAttribute("style", "left: " + (update.progress / 100) * 600 + "px");
             })
         }
         else if (msg.status == 'finished') {
             let prog = document.getElementById("progress" + msg.winner_ID);
             prog.innerHTML = "Progress: 100 %";
+            let car = document.getElementById("car" + msg.winner_ID);
+            car.setAttribute("style", "left: 600px");
             let gameStatus = document.getElementById("gamestatus");
             let announcement = "Player " + msg.winner_ID + " is the winner!";
             gameStatus.innerHTML = announcement.fontcolor("blue");
