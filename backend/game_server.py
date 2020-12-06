@@ -101,14 +101,19 @@ class GameServer:
         else:
             # The game exists, add this websocket to that room if its not already in a room.
             if ws not in self.rooms[game_ID]:
-                await self.__register(ws, game_ID)
 
+                # Has this game already started?
+                if len(self.game_player_percentages[game_ID]) > 0:
+                    return
+                
                 # Has this game timed out?
                 if self.recv_queues[game_ID].empty() == False and self.recv_queues[game_ID].get()=="Done":
                     # Remove those
                     self.__handle_finished_game(game_ID)
                     print("Removed ", game_ID)
                     return
+
+                await self.__register(ws, game_ID)
 
                 # Send a join game message to the game process
                 self.send_queues[game_ID].put(message)
@@ -166,6 +171,8 @@ class GameServer:
             len(self.player_states[game_ID]) > 1:
 
             print("All players are ready in game ID", game_ID, "!")
+            for x in self.player_states[game_ID].keys():
+                self.game_player_percentages[game_ID].append ({"player_ID": x, "progress": 0.0})
 
             # Tell players starting in 3 seconds
             message = {"type": "game_status", "game_ID": game_ID,"status": "countdown", "time_length_seconds": 3}
@@ -176,8 +183,6 @@ class GameServer:
             # Send game has started
             message = {"type": "game_status", "game_ID": game_ID, "status": "started"}
             await self.send_to_all_in_game(game_ID, message)
-            for x in self.player_states[game_ID].keys():
-                self.game_player_percentages[game_ID].append ({"player_ID": x, "progress": 0.0})
 
     def __handle_finished_game(self, game_ID):
         try:
