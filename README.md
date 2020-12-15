@@ -1,4 +1,4 @@
-# SE3313-TypeRacer
+# TypeRacer
 A game where players race to type a paragraph/phrase as quickly as possible!
 
 ## Screenshot of Game
